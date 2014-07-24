@@ -68,12 +68,12 @@
 
 # CONTIG EXTENSION
 #   -Included the -r option for contig extension (default is 0.9).
-#   -Speeded up and reduced the memory usage during the contig extension. 
+#   -Speeded up and reduced the memory usage during the contig extension.
 #             - SSPACE reads in the output of Bowtie at once, rather than reading it from the output file.
 #             - Faster check for presence of subsequence of a read, thereby able to faster check for overlapping sequences with the contig.
 
 # SCAFFOLDING
-#   -Combined the functions readBowtie and pairContigs, which saves runtime and memory. 
+#   -Combined the functions readBowtie and pairContigs, which saves runtime and memory.
 #   -Saving runtime by reading Bowtie results in at once, instead of reading it from Bowtie's output file.
 #   -Included a pre-filtering step of multiple alternative contig links before scaffolding. This step was previously done during scaffolding, now it's a step before scaffolding. It reduces the number of errors within the scaffolds.
 #   -Additional check to connect two alternative contigs, making the scaffolds more reliable, especially with mate pair libraries. The search space is included in the calculation of the ratio, rather than looking at the number of links only. See the README file for more information.
@@ -105,18 +105,17 @@
 
   if(!($opt_l) || !($opt_s)){
      print "ERROR: Parameter -l is required. Please insert a library file\n" if(!$opt_l);
-     print "ERROR: Parameter -s is required. Please insert a contig .fasta file\n" if(!$opt_s);
+     print "ERROR: Parameter -s is required. Please insert a contig FASTA file\n" if(!$opt_s);
      print "\nUsage: $0 $version\n\n";
-     
      print "============ General Parameters ============\n";
      print "-l  Library file containing two mate pate files with insert size, error and either mate pair or paired end indication.\n";
-     print "-s  Fasta file containing contig sequences used for extension. Inserted pairs are mapped to extended and non-extended contigs (REQUIRED)\n";
+     print "-s  FASTA file containing contig sequences used for extension. Inserted pairs are mapped to extended and non-extended contigs (REQUIRED)\n";
      print "-x  Indicate whether to extend the contigs of -s using paired reads in -l. (-x 1=extension, -x 0=no extension, default -x 0)\n";
      print "============ Extension Parameters ============\n";
      print "-m  Minimum number of overlapping bases with the seed/contig during overhang consensus build up (default -m $min_overlap)\n";
      print "-o  Minimum number of reads needed to call a base during an extension (default -o $base_overlap)\n";
      print "-t  Trim up to -t base(s) on the contig end when all possibilities have been exhausted for an extension (default -t $max_trim, optional)\n";
-     print "-u  Fasta/fastq file containing unpaired sequence reads (optional)\n";
+     print "-u  FASTA/FASTQ file containing unpaired sequence reads (optional)\n";
      print "============ Scaffolding Parameters ============\n";
      print "-z  Minimum contig length used for scaffolding. Filters out contigs that are below -z (default -z 0 (no filtering), optional).\n";
      print "-k  Minimum number of links (read pairs) to compute scaffold (default -k $min_links, optional)\n";
@@ -306,22 +305,22 @@
   #-------------------------------------------------END OF LIBRARIES. PRINT SUMMARY TO FILE AND END SESSION
   my $finalfile = $base_name . ".final.scaffolds.fasta";
   my $finalevfile = $base_name . ".final.evidence";
-  
+
   open (EVID, $evidencefile);
   open (FINALEV, "> $finalevfile");
   while(<EVID>){
     print FINALEV $_;
   }
-  
+
   open (SCAF, $mergedtigs);
   open (FINAL, "> $finalfile");
   while(<SCAF>){
     print FINAL $_;
   }
-    
+
   #make .dot file for visualisation
   &visualiseScaffolds($base_name.".visual_scaffolds", $evidencefile) if($doplot);
-  
+
   open (SUMFILE, ">>$summaryfile") || die "Can't open $summaryfile -- fatal\n";
   &printMessage("\n=>".getDate().": Creating summary file\n");
   print SUMFILE $sumfile.$seplines;
@@ -342,7 +341,7 @@ sub mergeContigs{
 
    my ($scaffold, $contigs, $mergedtigs, $chunk, $verbose,$min_tig_overlap,$max_count_trim) = @_;
 
-   &printMessage("\n=>".getDate().": Merging contigs and creating fasta file of scaffolds\n");
+   &printMessage("\n=>".getDate().": Merging contigs and creating FASTA file of scaffolds\n");
 
    open(IN,$scaffold) || die "can't read $scaffold -- fatal\n";
 
@@ -461,7 +460,7 @@ sub mergeContigs{
 
                   $prevseq = $all . lc($dynamic_word) . $tail;
                   my $overlap = length($dynamic_word);
-                  $ct_merge++; 
+                  $ct_merge++;
                   print "$ct_merge. GROUNDS FOR MERGING ($overlap nt overlap) !!!\n" if($verbose);
                   $headconcat .= "|merged$overlap"."\n".$prev;
                }else{
@@ -535,9 +534,9 @@ sub writesummaryfiles{
   }
   $counter--;
   my $half_length = $sum/2;
-  
+
   my @lengths2 = reverse sort { $a <=> $b } @lengths;
-  
+
   for(my $i = 0; $i <= $#lengths && $foundN50 == 0; $i++)
   {
     $sumN50 += @lengths2[$i];
@@ -554,7 +553,7 @@ sub writesummaryfiles{
   $sumfile .= "\t\tMin $insert size = ". @lengths2[$#lengths]."\n";
   $sumfile .= "\t\tAverage $insert size = ".int($sum/$counter)."\n";
   $sumfile .= "\t\tN50 = ". $foundN50. "\n\n";
-  
+
   close (INFILE);
   close OUTFILE;
 
