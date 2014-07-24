@@ -84,7 +84,7 @@
 #-------------------------------------------------LOAD PACKAGES AND DEFINE VARIABLES
   use strict;
   use Storable;
-  require "getopts.pl";
+  use Getopt::Std;
   use File::Path;
   use File::Basename;
 
@@ -94,8 +94,8 @@
   use DotLib;
 
   use vars qw($opt_m $opt_o $opt_v $opt_p $opt_k $opt_a $opt_z $opt_s $opt_b $opt_n $opt_l $opt_x $opt_u $opt_t $opt_T $opt_g $opt_r);
-  &Getopts('m:o:v:p:k:a:z:s:b:n:l:x:u:t:T:g:r:');
-  my ($base_overlap,$min_overlap,$verbose,$MIN_READ_LENGTH,$SEQ_SLIDE,$min_base_ratio,$min_links,$max_link_ratio,$unpaired_file,$max_trim,$base_name, $max_count_trim,$min_tig_overlap, $doplot, $extending, $threads, $minContigLength, $gaps, $unpaired,$gapclosure)= (20, 32, 0, 16, 1, 0.9, 5, 0.70, "no-u", 0, "standard_output", 10, 15, 0, 0, 1, 0, 0, 0,0);
+  getopts('m:o:v:p:k:a:z:s:b:n:l:x:u:t:T:g:r:');
+  my ($base_overlap, $min_overlap, $verbose, $MIN_READ_LENGTH, $SEQ_SLIDE, $min_base_ratio, $min_links, $max_link_ratio, $unpaired_file, $max_trim, $base_name, $max_count_trim, $min_tig_overlap, $doplot, $extending, $threads, $minContigLength, $gaps, $unpaired, $gapclosure) = (20, 32, 0, 16, 1, 0.9, 5, 0.7, "no-u", 0, "standard_output", 10, 15, 0, 0, 1, 0, 0, 0, 0);
 
   my $version = "[SSPACE_Basic_v2.0_linux]";
   my $seplines = ("-" x 60)."\n";
