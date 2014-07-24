@@ -1,0 +1,1 @@
+lib1 SRR001665_1.fastq SRR001665_2.fastq 200 0.75 FR

@@ -1,0 +1,485 @@
+Scaffolding Pre-Assemblies After Contig Extension (SSPACE) 
+
+SSPACE Premium v1.0 Marten Boetzer - Walter Pirovano, Aug 2011
+email: walter.pirovano@baseclear.nl
+
+
+Description
+-----------
+
+SSPACE is a script able to extend and scaffold pre-assembled contigs using one or more mate pairs or paired-end libraries, or even a combination. 
+
+Implementation and requirements
+-------------------------------
+
+SSPACE is implemented in perl and runs on linux, MAC and windows. SSPACE is built based on SSAKE. Code of SSAKE is changed to be able to extend and scaffold pre-assembled contigs for multiple paired reads libraries.
+
+PLEASE READ:
+SSPACE tracks in memory all contigs. That means that the memory usage will increase drastically with the size of your contig data set. In addition, during contig extension single reads are extracted and mapped to the contigs. Unmapped reads are stored in memory. Again, the more reads that can not map, the bigger the dataset and the more memory is used. Just be aware of these limitations and don't be surprised if you observe a lot of data swapping to disk if you attempt to run SSPACE on a machine with little RAM.  
+
+Contig extension might not be suited to work with 454-type read pair libraries. Simply because recurring base insertions/deletions errors, such as those commonly seen in homopolymeric regions, will not cluster well in the context of the SSAKE contig extension algorithm scheme. In addition, long 454 reads are less likely to map against the contigs, thus less read pairs are found and scaffolding is based on less read pairs. One possibility is to allow gaps during mapping using the ‘-g’ parameter.
+
+Citing SSPACE
+------------
+
+Thank you for using, developing and promoting this free software.
+If you use SSPACE for you research, please cite:
+
+Boetzer M, Henkel CV, Jansen HJ, Butler D and Pirovano W. 2010. Scaffolding pre-assembled contigs using SSPACE. Bioinformatics. 27(4):578-579
+
+Running SSPACE
+-------------
+
+e.g. perl SSPACE_Premium_v1.0.pl -l libraries.txt -s contigs.fasta -x 0 -m 32 -o 20 -t 0 -k 5 -a 0.70 -n 15 -p 0 -v 0 -z 0 -g 0 -T 1 -b standard_out 
+
+Usage: ./SSPACE_Premium_v1.0.pl
+
+Required parameters:
+   -l  Library file containing two paired read files with insert size, error and orientation (see Manual for more information). Also possible to insert .tab files with pairing information.
+   -s  Fasta file containing contig sequences used for extension. Inserted paired reads are mapped to extended and non-extended contigs
+
+Extension parameters;
+   -m  Minimum number of overlapping bases with the seed/contig during overhang consensus build up (default -m 32)
+   -o  Minimum number of reads needed to call a base during an extension (default -o 20)
+   -t  Trim up to -t base(s) on the contig end when all possibilities have been exhausted for an extension (default -t 0)
+   -u  Single fasta/fastq file containing unpaired sequence reads
+   -r  Minimum base ratio used to accept a overhang consensus base (default -r 0.9)
+
+Parameters below only considered for scaffolding and are all optional;
+   -k  Minimum number of links (read pairs) to compute scaffold (default -k 5)
+   -a  Maximum link ratio between two best contig pairs. higher values lead to least accurate scaffolding. (default -a 0.70)
+   -n  Minimum overlap required between contigs to merge adjacent contigs in a scaffold (default -n 15)
+   -z  Minimum contig size used for scaffold. Filters out contigs below this size. (default –z 0, no filtering)
+
+Bowtie parameters;
+   -g  Maximum number of allowed gaps during mapping with Bowtie. Corresponds to the -v option in Bowtie (default –g 0).
+   -T  Specifes the number of threads in Bowtie. Corresponds to the –p option in Bowtie (default –T 1).
+
+Additional options;
+   -x  Indicate whether to extend the contigs of -s using paired reads in -l. (-x 1=extension, -x 0=no extension, default -x 0)
+   -v  Runs in verbose mode (-v 1=yes, -v 0=no, default -v 0)
+   -b  Base name for your output files (default -b standard_output)
+   -p  Make .dot file for visualisation (-p 1=yes, -p 0=no, default -p 0)
+
+
+How it works
+------------
+
+The program consists of several steps, a short overview;
+
+The first steps are reading the data and filter them. The protocol is slightly different when -x is set to either 0 or 1. We treat them separately here;
+
+With -x 0 the steps are;
+1) Read -l library file;
+	A) For each library in the -l library file. Store the reads in appropriate format. Paired reads are stored in a new file with a similar read name for easy tracking of the paired read. Format is;
+
+>read1.1
+AGCTGATAGATGAT
+>read1.2
+GATGATAGATAGAC
+
+2) Convert the inserted contig file to appropriate format.
+
+With -x 1 the steps are;
+
+1) Read -l library file;
+	A) For each library in the -l library file. Store the reads in appropriate format, similar as step 1A.
+	B) For all libraries
+	- store the single reads to a new file. Only reads containing only ACGT characters are stored.
+2) Extend the pre-assembled contigs
+	A) Map single reads of step 1B to (-s) contig file with Bowtie. 
+	B) Read unmapped reads into memory. 
+	C) Go through each contig in the (-s) contig file, and try to extend the contig. The new contigs are stored in a new file.
+
+
+After producing either a formatted or an extended contig file, the next step is to go through each library in the -l library file and map the filtered paired reads of step 1A to the new contigs;
+
+3) Use Bowtie to map single reads of 1A to either the formatted or extended contigs. Map only reads that are on the edges of the contigs. Only reads that map to only one contig are stored in a file. Position and orientation of each read is stored in the file.
+4) Retrieve the position of each found read. 
+5) Pair contigs if both reads if a paired-read are found, store the pairing information into memory. In addition, store the sequence of the pair into memory. If the sequence of a pair is already used for pairing contigs, it is not used again. 
+6) Pair contigs based on the number of links (-k) and link ratio (-a)
+7) Merge, orient and order the contigs to produce scaffolds.
+
+8) If multiple libraries are in -l file, the produced scaffolds in fasta format are the input for the new library. Steps 3 till 8 are repeated for each library.
+
+A more detailed view of the six main steps are given below.
+
+Detailed view
+------------
+
+
+1. Reading libraries
+Both fasta/fastq files inserted at the -l library file are read, converted and stored in a new file. This new file is used for mapping with Bowtie (step 4), where the new naming of the headers makes it easy to backtrack the original read pair. 
+
+>read1.1 (read from file 1)
+ACGATGCTAT
+
+>read1.2 (read from file 2)
+ACCGCGCCCC
+
+If -x 1 is set, for contig extension, single reads containing only ACGT characters are stored in a new file. The single reads are mapped to contigs at the next step. 
+
+2. Mapping when -x 1
+To extend contigs, only reads that are not already present on the contigs should be used. Otherwise, reads are re-used and cause erroneous contigs, but causes also reads mapped to multiple locations/contigs (step 4). To filter these reads out, Bowtie is used. Bowtie maps the produced single reads at step 1 to the (-s) pre-assembled contigs. A file is generated with reads that did not map to the contigs. The unmapped read file is read in memory, populating a hash table keyed by unique sequence reads with pairing values representing the number of sequence occurrences. The hash is used for contig extension at the next section. 
+
+3. Extending when -x 1
+Contigs are extended, when -x set to 1, using the unmapped reads with a method developed by SSAKE. With SSAKE, contigs extension is initiated by generating the longest 3'-most word (k-mer) from the unassembled read u that is shorter than the sequence read length l.  Every possible 3' most k-mers will be generated from u and used in turn for the search until the word length is smaller than a user-defined minimum, m.  Meanwhile, all perfectly overlapping reads will be collected in an array and further considered for 3' extension once the k-mer search is done.  At the same time, a hash table c will store every base along with a coverage count for every position of the overhang (or stretches of bases hanging off the seed sequence u).   
+
+Once the search complete, a consensus sequence is derived from the hash table c, taking the most represented base at each position of the overhang.  To be considered for the consensus, each base has to be covered by user-defined -o (set to 20 by default).  If there's a tie (two bases at a specific position have the same coverage count), the prominent base is below a user-defined ratio r, the coverage -o is to low or the end of the overhang is reached, the consensus extension terminates and the consensus overhang joined to the contig.  All reads overlapping are searched against the newly formed sequence and, if found, are removed from the hash table and prefix tree. If they are not part of the consensus, they will be used to extend other contigs, if applicable.  If no overlapping reads match the newly formed contig, the extension is terminated from that end and SSAKE resumes with a new contig.  That prevents infinite looping through low complexity DNA sequences. In the former case, the extension resumes using the new [l-m] space to search for joining k-mers. 
+
+The process of progressively cycling through 3'-most k-mer is repeated after every contig extension until nothing else can be done on that side.  Since only left-most searches are possible with a prefix tree, when all possibilities have been exhausted for the 3' extension, the complementary strand of the contiguous sequence generated is used to extend the contig on the 5' end.  The DNA prefix tree is used to limit the search space by segregating sequence reads and their reverse-complemented counterparts by their first eleven 5' end bases.  
+
+There are three ways to control the stringency in SSPACE:
+1) Disallow contig extension if the coverage is too low (-o). Higher -o values lead to shorter contigs, but minimizes sequence misassemblies.
+2) Adjust the minimum overlap -m allowed between the contig and short sequence reads. Higher m values lead to more accurate contigs at the cost of decreased contiguity.  
+3) Set the minimum base ratio -r to higher values
+
+After the sequence assembly, a file is generated with .extendedcontigs.fasta extension in the 'intermediate_results' folder. This file contains both extended and non-extended contigs.
+
+The next steps are looped through each library, present in the (-l) library file.
+
+4. Mapping unique paired reads
+
+At step 1, pairs of each library were filtered. Reads containing N's are unable to correctly map to the contigs, therefore they are not used by Bowtie. Bowtie maps the single reads to the contigs, produced either after extending (if -x 1), or after formatting (if -x 0), or after step 5 if multiple libraries are inserted on -l.
+
+Before mapping, contigs are shortened, reducing the search space for Bowtie. Only edges of the contigs are considered for mapping. Cutting of edges is determined by taking the maximal allowed distance inserted by the user in the library file (insert size and insert standard deviation). The maximal distance is insert_size + (insert_size * insert_stdev). For example, with a insert size of 500 and a deviation of 0.5, the maximal distance is 750. First 750 bases and last 750 bases are subtracted from the contig sequence, in this case. 
+
+------------------------------------------
+           |                  |                			
+------------                  ------------
+   750bp                          750bp
+
+This step reduces the search space by merging the two sequences, divided by a ‘N’ character.
+
+The algorithm of mapping goes through each pair and checks its occurrence on the edges of the contigs. If both reads are found, the reads of the pair is stored and contigs could be paired in the next step. Otherwise, it is not stored and the read pair is not used for contig pairing. If a pair is previously found and used for contig pairing, the pair is not considered again. Otherwise same links between contigs are found based on same read pair, which can generate misleading results.
+
+If either of the two reads of a read pair occur on multiple contigs, one can not tell which contig should be paired. For example, the left read occurs at contigs 1 and 3, and the right read at contig 2. For this situation it is impossible to tell if contigs 1 and 2 should be paired, or contigs 1 and 3. Therefore, reads that occur multiple times on contigs are not considered for contig pairing.
+
+5a. Building scaffolds
+The final step is scaffolding. SSPACE uses an updated version of the SSAKE scaffolder for this. For each read pairs, putative contig pairs (pre-scaffolding stage) are tallied based on the position/location of the paired reads on different contigs. Contig pairs are only considered if the calculated distance between them satisfy the mean distance specified (fourth column in -l file) while allowing for a deviation (fifth column in -l file), also defined by the user. Only contig pairs having a valid gap or overlap are allowed to proceed to the scaffolding stage.
+Please note that this stage accepts redundancy of contig pairs (i.e. a given contig may link to multiple contigs, and the number of links (spanning pairs) between any given contig pair is recorded, along with a mean putative gap or overlap(-)). 
+
+Once pairing between contigs is complete, the scaffolds are built using contigs as seeds. Every contig is used in turn until all have been incorporated into a scaffold.
+
+Consider the following contig pairs (AB, AC and rAD):
+
+    A         B
+========= ======== 
+  ->       <-
+   ->        <-
+    ->      <-
+       ->       <-
+
+    A       C
+========= ======
+  ->        <-
+    ->        <-
+
+   rA        D           equivalent to rDA, in this order
+========= =======
+      ->   <-
+     ->   <-
+       ->   <-
+
+Two parameters control scaffolding (-k and -a).  The -k option specifies the minimum number of links (read pairs) a valid contig pair MUST have to be considered.  The -a option specifies the maximum ratio between the best two contig pairs for a given contig being extended.  For example, contig A shares 4 links with B and 2 links with C, in this orientation.  contig rA (reverse) also shares 3 links with D.   When it's time to extend contig A (with the options -k and -a set to 2 and 0.7, respectively), both contig pairs AB and AC are considered.  Since C (second-best) has 2 links and B (best) has 4 (2/4) = 0.5 below the maximum ratio of 0.7, A will be linked with B in the scaffold and C will be kept for another extension. If AC had 3 links the resulting ratio (0.75), above the user-defined maximum 0.7 would have caused the extension to terminate at A, with both B and C considered for a different scaffold.  A maximum links ratio of 1 (not recommended) means that the best two candidate contig pairs have the same number of links -- SSPACE will accept the first one since both have a valid gap/overlap. The above method was adopted from SSAKE. The SSPACE improved this method by introduing another method if a contig can link to more than one alternative. Both methods (original SSAKE method and our method) for handling alternatives are explained below;  
+
+In version 2-0 of SSPACE an additional ratio is used to generate more reliable scaffolds, especially for libraries with large libraries. This ratio is used as an additional control for the scaffolding process. A contig with multiple links should satisfy both ratios in order to form a scaffold. The rules for scaffolding contigs with multiple alternative contig connections is explained in more detail below.
+
+If a contig can be linked to more than one alternative, connections between these alternatives are searched and linked together if a connection is found. Otherwise a ratio is calculated between the two best alternatives. If this ratio is below a threshold (-a) a connection with the best scoring alternative is established. The two methods are shown below;
+
+The first method;
+A has 10 links with B 
+A has 5 links with C
+B has 10 links with C;
+
+Result is a scaffold containing A-B-C
+
+The second method (only used if first method did not produce a scaffold) is based on two ratios. The first ratio (ratio1) is based on the number of links, while the second ratio (ratio2) is based on the number of links and the used search space. This will be explained using an example; 
+
+If we have an insert size of 450 and contigs has two alternatives with two contigs, with the following details;
+
+A and B with;
+	gap = 100
+	links = 19
+	size of B is 100bp
+
+A and C with;
+	gap = 400
+	links = 9
+	size of B is 1000bp
+
+Ratio1 is simply calculated by dividing the contig with lowest links with the contig with highest number of links;
+
+Here, this is 9/19 (C/B) = 0.47. 
+
+
+Ratio2 is calculated by incorporating the insert size. SSPACE first determines the amount of search space that was used for searching links.
+
+In figure, where each character represents 50bp, this looks something like;
+
+	     <100bp>
+           ==(B)
+gap=100   / 
+	   / 
+(A)======
+	   \
+gap=400   \		
+           ------====================(C)
+			     <1000bp>
+         *********
+      < SEARCH SPACE >
+
+Legenda;
+* = search space
+= = contig
+- = gap
+
+Now we calculate the used space on contigs (B) and (C) that was used for pairing with contig (A). In principle, this is just calculating the number of nucleotides fall into the SEARCH SPACE.
+For contig B, we can see that the whole contig falls into the SEARCH SPACE. Therefore, the space = 100bp
+For contig C, we can see that only the first 50bp of the contig falls into the SEARCH SPACE. Therefore, the space = 50bp.
+
+Next, we estimate the number of links per space, by dividing the total number of links with the found space;
+For contig B, this is 19 links per 100 bp space = 0.19 links per space
+For contig C, this is 9 links per 50 bp space = 0.18 links per space
+
+Ratio2 is then calculated by dividing the two numbers; 0.18/0.19 = 0.95. If both ratio1 and ratio2 are below the -a ratio threshold, the scaffold is A-B. Otherwise, no reliable scaffold can be formed and the scaffold extension is stopped.
+
+5b. Left scaffold extension
+When a scaffold extension is terminated on one side, the scaffold is extended on the "left", by looking for contig pairs that involve the reverse of the seed (in this example, rD).  With AB and AC having 4 and 2 links, respectively and rD being the only pair on the left, the final scaffolds outputted by SSPACE would be:
+
+1) rD-A-B
+2) C 
+
+SSPACE outputs a .scaffolds file with linkage information between contigs (see "Understanding the .scaffolds csv file" below)
+Accurate scaffolding depends on many factors.  Number and nature of repeats in your target sequence, optimum adjustments of insert size, error, parameters -k and -a and data quality/size of sequence set (more doesn't mean better) will all affect SSPACE's ability to build scaffolds.
+
+
+6. Merging contigs
+SSAKE scaffolder produces links between contigs and determines the possible gap between them. For a positive gap, m number of N's will be placed between them if a gap of size m is predicted to occur. When a negative gap is generated, a putative overlap is predicted to occur. The adjacent contigs are searched for overlap within a window given at -n option till 50 bp. If an overlap was found, contigs are merged and the region is marked with lowercase nucleotides. Otherwise, if no overlap was detected, a single "n" will be placed between the contigs. A short overview of this step with three examples;
+
+>contig_1
+AGCTAGTCGTAGCTTGTAC
+>contig_2 
+ACGTAGTGATATTATTGTC
+
+Example 1:
+A link between contig_1 and contig_2 is found, with a putative gap of 10. In the final output, the gaps is indicated by 10 N's between the two contigs.
+
+Link = contig_1 with contig_2. Gap = 10;
+AGCTAGTCGTAGCTTGTACNNNNNNNNNNACGTAGTGATATTATTGTC
+
+Example 2;
+A link between contig_1 and contig_2 is found, with a putative gap of -10. When using the -n 10 option, no overlap was found and a small <n> is inserted between the two contigs.
+
+Link = contig_1 with contig_2. Gap = -10. -n = 10;
+AGCTAGTCGTAGCTTGTACnACGTAGTGATATTATTGTC
+
+Example 3;
+A link between contig_3 and contig_4 is found, with a putative gap of -10. When using the -n 10 option, an overlap of 13 nucleotides was found, indicated in lower case in the final output.
+
+>contig_3
+AGTGTTAGATAGTTATAGA
+>contig_4
+AGATAGTTATAGAAGTAGT
+
+Link = contig_3 with contig_4. Gap = -10. -n = 10;
+AGTGTTagatagttatagaAGTAGT
+
+TIP: The summary file calculates the mean and median insert size based on mapping of paired reads on a single contig. For more reliable gap and overlap estimation, one may consider to change the insert size in the library file with the calculated mean.
+
+
+Input sequences
+---------------
+
+FASTA FILES:
+>ILLUMINA-52179E_0001:3:1:1062:15216#0/2
+ATNGGGTTTTTCAACTGCTAAGTCAGCAGGCTTTTCACCCTTCAACATC
+>ILLUMINA-52179E_0001:3:1:1062:4837#0/2
+ANNAACTCGTGCCGTTAAAGGTGGTCTTGCATTTCAGAAAGCTCACCAG
+
+FASTQ files:
+@ILLUMINA-52179E_0001:3:1:1062:15216#0/2
+ATNGGGTTTTTCAACTGCTAAGTCAGCAGGCTTTTCACCCTTCAACATC
++ILLUMINA-52179E_0001:3:1:1062:15216#0/2
+OOBOLJ[HHO`_aaa`a_]aaaY[`Za[Y[F]]VZWX]WZ^Z^^^O[XY
+@ILLUMINA-52179E_0001:3:1:1062:4837#0/2
+ANNAACTCGTGCCGTTAAAGGTGGTCTTGCATTTCAGAAAGCTCACCAG
++ILLUMINA-52179E_0001:3:1:1062:4837#0/2
+OBBOO^^^^^bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb`bbbb`
+
+General points:
+-Files present in the -l library file should either be in .fastA or .fastQ format, which is automatically determined by the program. For each paired read, one of the reads should be in the first file, and the other one in the second file. The paired reads are required to be on the same line in both files.
+-the header (given after "@" character for .fastaQ or ">" for .fastaA) of contig and paired-read data files could be of any format. No typical naming convention is needed. Duplicate names are also allowed. 
+-Quality values of the fastQ files are not used.
+-To be considered, sequences have to be longer than 16 nt or -m (but can be of different lengths).  If they are shorter, the program will simply omit them from the process. 
+-Reads containing ambiguous bases, like <N> and <.>, and characters other than ACGT will be ignored entirely in input fasta/fastaq files inserted with -l option.
+-Contigs (inserted with -s option) containing ambiguous bases, like <N> and <.>, and characters other than ACGT are not ignored. However, contigs having these other characters can prevent proper contig extension when they are at the beginning or end of the sequence. 
+-Spaces in any .fastq and .fasta file are NOT permitted and will either not be considered or result in execution failure
+-For Bowtie, option -v 0 is used, which correspond to zero mismatches allowed on mapping. In addition bowtie's -m 1 option is used; only reads that map exactly to one contig (both in normal and reverse complement) are outputted. Pairs that are present on multiple contigs, are not used for scaffolding. Results are stored in the folder 'bowtieoutput'. For information about Bowtie see (bowtie-bio.sourceforge.net/).
+
+
+Fasta header of .extendedcontig.fasta file
+------------
+
+e.g.
+>extcontig27|size52|read193|cov92.79|seed:PreAssembledCtg0027
+
+contig id# = 27, this contig is extended during extension step. If not extended, the contig is named >contig27
+size (G) = 52 nt. Size of the contig.
+number of reads (N) = 193. Number of reads for extension.
+cov [coverage] (C) = 92.79. the coverage (C) is calculated using the total number (T) of consensus bases [sum(L)] provided by the assembled sequences divided by the contig size:
+
+C = T / G
+seed = PreAssembledCtg0027. Header of the original pre-assembled contig file.
+
+Output files
+------------
+Each file is starting with a basename given at the -b parameter. First, four main files are generated in the current working directory;;
+
+(basename).final.scaffolds.fasta       :: text file; Final scaffolds produced by SSPACE.
+(basename).final.evidence:: text file; Produced scaffolds including the initial numbered contigs.
+(basename).logfile       :: text file; Logs execution time / errorsE
+(basename).summaryfile:: text file; Gives a summary after every step. Summary of number of inserted sequences, filtered sequences, contig sequences, mapping stats, pairing stats and contig/scaffold size summaries.
+
+
+In addition, four folders are generated, each having a number of files;
+
+'reads' folder; 
+(basename).(libname).file(libnumber).fasta:: fasta file; Converted files of the paired-read data, each two consecutive sequences are pairs. This file is used as input for both the contig extension as the scaffolding step.. 
+
+'bowtieoutput' folder;
+Four files are generated by bowtie;
+(basename).bowtieIndex.* :: index file; Index files generated by 'bowtie-build'. Produced for each library.
+
+For further information about the outputs of Bowtie, see the Bowtie manual (bowtie-bio.sourceforge.net/).
+
+
+'pairinfo' folder;
+(basename) .(libname).pairing_distribution.csv:: comma-separated file; 1st column is the calculated distance for each pair (template) with reads that assembled logically within the same contig.  2nd column is the number of pairs at that distance. Produced for each library.
+(basename).(libname).pairing_issues:: text file; Lists all pairing issues encountered between contig pairs and illogical/out-of-bounds pairing. Produced for each library.
+
+'intermediate_results' folder;
+(basename).extendedcontigs.fasta   :: fasta file; All contig sequences. Both extended and non-extended contigs. Extended contigs are named ">ext_contig" , while non-extended are named ">contig" in the header. Only produced when -x 1.
+
+(basename).formattedcontigs.fasta   :: fasta file; Original contig sequences. Formatted to appropriate input for scaffolding. Only produced when -x 0.
+
+(basename).(libname).scaffolds :: comma-separated file; see below. Produced for each library.
+
+(basename).(libname).scaffolds.fasta :: fasta file; All merged/unmerged contigs within scaffolds are listed.  The overlap sequence between contigs (>= -n bases) will be shown in lower case within the merged contig.  Note that *perfect* sequence overlap has to occur between 2 predicted adjacent contigs of a scaffold in order to merge. Only merging of two contigs is established if a negative gap is determined. When two consecutive contigs do not physically overlap, then gaps will be padded with Ns of length corresponding to the predicted gap size m (refer to Understanding the .scaffolds csv file below) and predicted but undetected overlaps with a single (n).
+
+(basename).(libname).scaffolds.evidence :: text file; Produced scaffolds including the initial numbered contigs (-s option). (refer to Understanding the .evidence file below).  
+
+(basename).(libname).foundlinks :: text file; Links between the contigs/scaffolds and their correspond gapsize.
+
+(basename).(libname).repeats :: text file; Contig-edges having multiple links with other contigs.
+
+
+'dotfiles' folder;
+(basename).(libname).visual_scaffolds.dot :: dot file; This file can be used to visualise the contigs orientation and order on the scaffolds. The .dot file can be converted to any format using the GraphViz package using the 'dot' command (www.graphviz.org). Each dotfile is cut into 5mb parts, otherwise the scaffolds can't be converted and visualised properly.
+
+
+Understanding the .scaffolds csv file
+-------------------------------------
+
+scaffold1,7484,f127Z7068k12a0.58m42_f3090z62k7a0.14m76_f1473z354
+
+Each column is separated by a comma;
+column 1: a unique scaffold identifier
+column 2: the sum of all contig sizes that made it to the scaffold/supercontig
+column 3: a contig chain representing the layout:
+
+e.g.
+f127Z7068k12a0.58m42_f3090z62k7a0.14m76_f1473z354
+
+means: contig f127 (strand=f/+), size (z) 7068 (Z if contig was used as the seed sequence) has 12 links (k), link ratio of 0.58 (a) with a mean gap of 42nt (m) with reverse (r) of contig 3090 (size 62) on the right.  if m values are negative, it's just that a possible overlap was calculated using the mean distance supplied by the user and the position of the reads flanking the contig.
+Negative m values imply that there's a possible overlap between the contigs. But since the pairing distance distribution usually follows a Normal/Gaussian distribution, some distances are expected to be larger than the median size expected/observed.  In reality, if the exact size was known between each paired-reads, we wouldn't expect much negative m values unless a break occurred during the contig extension (likely due to base errors/SNPs). 
+
+
+
+Understanding the .scaffolds.fasta file
+
+-------------------------------------
+
+scaffold13.1|size84140|tigs14
+
+Each column represents;
+name of the scaffold
+size of the scaffold
+number contigs in scaffold 
+
+Each initial contig inputted at -s option stored in a scaffold is written to the .evidence file. This file is explained below. 
+
+Understanding the .scaffolds.evidence  file
+-------------------------------------
+
+>scaffold1.1|size9058|tigs5
+f_tig5|size728|links12|gaps100
+r_tig1|size2726|links10|gaps89
+f_tig100|size3687|links4|gaps-46|merged40
+f_tig91|size238|links6|gaps392
+f_tig120|size1112
+
+The first line indicates the scaffold, which is the same as in the .scaffolds.fasta file. Next, for each contig the connection (orientation, links and gaps) with other contigs are given. The second line for example means forward contig 5 with size 728 has 12 links and a gap of 100bp with reverse contig 1. If a line ends with <merged>, it means that the contig has overlap with the next contig, and they are merged. For contig f_tig100, 40 nucleotides had an overlap with contig f_tig91.
+
+
+Producing visualisation of scaffolds with .dot file using -p parameter
+-------------------------------------
+To visualize the scaffolds of the .dot file, GraphViz should be downloaded at (www.graphviz.org). GraphViz converts the .dot file to any desired output using the 'dot' function. For example to convert the .dot to a .ps format;
+
+dot -Tps2 (basename).(libname).visual_scaffolds.dot -o MYOUTPUT.ps
+
+This will produce a postscript (.ps) file. For other options, see the manual of GraphViz.  
+
+
+
+How does the .tab file work
+-------------------------------------
+The .tab file is a tab-delimited file containing information about the positions of the reads on the contigs. On each line, positions of both reads are given. 
+
+A typical .tab file line looks like;
+
+contig1	100	150	contig1	300	250
+
+Here, the first read is found at contig1 with start and end at position 100 and 150, respectively. Meaning that the read is found at the positive strand (-).
+The second read is found at contig1 at start and end at position 300 and 250, respectively. Meaning that the read is found at the negative strand (-). 
+
+In figure;
+      	      read1    read2
+			---->    <----
+contig1 ----------------------------------------------------
+
+
+Another line may look like;
+
+contig2	300	350	contig3	100	550
+
+Here, the first read is found at contig1 with start and end at position 100 and 150, respectively. Meaning that the read is found at the positive strand (-).
+The second read is found at contig1 at start and end at position 300 and 250, respectively. Meaning that the read is found at the negative strand (-). 
+
+In figure;
+      	            read1    
+			      ---->    	  read2
+contig2 ------------------------      <----
+contig3					-------------
+
+Normally, SSPACE parses the output of Bowtie directly to the above format and uses this information to pair the contigs and to determine the insert size. With the .tab format, users can put directly the mapping positions of the reads into SSPACE, which is much faster. Also, this way users can make use of their favorite read mapper and put the results into SSPACE.
+
+To work properly, the input contigs (-s option) should have the same name as the contigs in the .tab file, as explained in the MANUAL. Since the TAB file can be used in combination with other TAB files and also fasta/fastq files, as well as multiple libraries, the original mappings should be updated after each library. Therefore, contigs are stored in memory, and their position in scaffolds is updated after each scaffold formation. An example;
+
+contig2 (200bp) is linked with contig3 (200bp) with a gap of 10bp
+
+		contig3				contig2
+scaf1------------------------NNNNNNNNNN--------------
+
+the contigs are then updated to new positions;
+-contig3 is at position 1-200 at scaf1
+-contig2 is at position 210-410 at scaf1
+
+Most common used output format of read mappers are .sam format and their equivalent binary format .bam. A script is attached in the 'tools' folder in the SSPACE package, which converts .sam/.bam files to .tab format. See the TUTORIAL on an example on how such a process looks like.
+
+SSPACE does not
+--------------
+
+-Take into consideration base quality scores.  It is up to the user to process the sequence data before clustering with SSPACE. Python scripts (TQS.py, TQSfastq.py, TQSexport.fq) are provided to help trim poor quality bases off Illumina sequences. Refer to TQS.readme and TRIMMING_PAIRED_READS.README included in this distribution (in the ./tools subdirectory) for information on how to run those programs
+-Consider sequence read having any character other than A,C,G,T and will skip these reads entirely while reading the fasta file. 
+-Only input of .fasta or .fastq is possible. For conversion to these formats use the fq_all2std.pl function in the ./tools directory.                                                                                                                                                                                                                                                                                                                                                                                                                       

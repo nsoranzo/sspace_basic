@@ -1,0 +1,63 @@
+
+TQS
+
+Trim Quality Solexa-Illumina Sequences (TQS)
+
+SYNOPSIS
+   Quality trim solexa-Illumina sequence reads using user-defined thresholds
+"""
+__author__ = "Rene L. Warren"
+__version__ = '1.0'
+
+#LICENSE
+#   Copyright (c) 2007 Canada's Michael Smith Genome Science Centre.  All rights reserved.
+
+#   This program is free software; you can redistribute it and/or
+#   modify it under the terms of the GNU General Public License
+#   as published by the Free Software Foundation; either version 2
+#   of the License, or (at your option) any later version.
+
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+Execution example
+==================
+python TQS.py -f test_seq.txt -q test_prb.txt -l 36 -t 5 -d 5 -c 20
+
+
+Options
+=======
+python TQS.py --help
+
+Usage: TQS.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -f SEQFILE, --sequence file=SEQFILE
+                        Illumina sequence file - Output format from the 1G
+                        Genome Analyzer (_seq.txt):
+                        7       1       255     669
+                        AACCCCCACTCCTACAACGCCATCATTCCCCTCGAC
+  -q QUALFILE, --qual file=QUALFILE
+                        A prb file containing all the Illumina intensities, as
+                        outputted by the 1G Genome Analyzer (_prb.txt)
+  -l MER, --length=MER  Length of sequence reads (i.e. Number of sequencing
+                        cycles, default=36)
+  -t THRESHOLD, --threshold=THRESHOLD
+                        Base intensity threshold value (-40 to 40, default=5)
+  -d DIFF, --difference=DIFF
+                        Base intensity difference between top intensity and
+                        second best (1 to 80, default=5)
+  -c CONSEC, --consec=CONSEC
+                        Minimum number of consecutive bases passing threshold
+                        values (default=20)
+  -v, --verbose         Runs in Verbose mode.
+
+
+Output
+======
+
+.log file: Indicates the option chosen and tracks the execution time
+.fa file: A single fasta file containing the sequence reads that passed the filter specified

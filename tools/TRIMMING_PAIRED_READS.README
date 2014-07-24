@@ -1,0 +1,88 @@
+December 2008/February 2010
+Rene Warren
+rwarren at bcgsc dot ca
+warrenlr at gmail dot com
+
+#--------------------------------
+To trim reads using fastq as input, run TQSfastq.py on both PE file:
+*Make sure you know whether your fastq file qual score were encoded ASCII+33 (standard) or ASCII+64 (illumina) 
+
+for options run:
+./TQSfastq.py --help
+
+Usage: TQSfastq.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -f FASTQFILE, --fastq file=FASTQFILE
+                        fastq (fq) file - standard (ASCII+33) encoded PHRED
+                        quality scores / illumina (ASCII+64) encoded PHRED
+                        quality scores
+  -t THRESHOLD, --Phred quality threshold=THRESHOLD
+                        Base intensity threshold value (Phred quality scores 0
+                        to 40, default=10)
+  -c CONSEC, --consec=CONSEC
+                        Minimum number of consecutive bases passing threshold
+                        values (default=20)
+  -e ENCODING, --ASCII encoding type: 33 or 64=ENCODING
+                        Type of ASCII encoding: 33 (standard) or 64 (illumina)
+                        (default=64)
+  -v, --verbose         Runs in Verbose mode.
+
+
+e.g. 
+./qseq2fastq.pl s_3_1_0048_qseq.txt > s_3_1_0048_qseq.txt.fq
+./qseq2fastq.pl s_3_2_0048_qseq.txt > s_3_2_0048_qseq.txt.fq
+./TQSfastq.py -f s_3_1_0048_qseq.txt.fq -t 20 -c 36 -e 64
+./TQSfastq.py -f s_3_2_0048_qseq.txt.fq -t 20 -c 36 -e 64
+
+To join both for SSAKE's paired-end input, run:
+./makePairedOutput2UNEQUALfiles.pl s_3_1_0048_qseq.txt.fq_T20C36E64.trim.fa s_3_2_0048_qseq.txt.fq_T20C36E64.trim.fa
+
+This will create 2 files: paired.fa and unpaired.fa
+Run SSAKE: SSAKE -f paired.fa -g unpaired.fa -p 1
+
+#--------------------------------
+*For those not interested in trimming their reads, but interested in joining 2 equal-record fasta files:
+
+./qseq2fasta.pl s_3_1_0048_qseq.txt > file1.fa
+./qseq2fasta.pl s_3_2_0048_qseq.txt > file2.fa
+./makePairedOutput2EQUALfiles.pl file1.fa file2.fa
+
+#--------------------------------
+Many of you asked me whether you could trim paired-end (PE) Illumina reads with TQS.py
+The answer is yes. However, I never got a chance to conjure a formal script for PE reads - But I hacked
+a work-around trimming paired reads:
+
+
+
+1. run splitInput.pl (supplied in the ./tools directory) where all *_seq.txt and *_prb.txt are located:
+
+Usage: ./splitInput.pl <directory where all *_seq and *_prb are> <# Illumina cycles (read length)>
+
+
+2. run this perl one-liner to make a shell script:
+
+ls -la | perl -ne 'if(/(s_\d+_\d+)_seq.txt.new/){print "TQS.py -f $1_seq.txt.new -q $1_prb.txt.new -l * -t * -d * -c *\n"}' > runTQS.sh
+*replace stars with your values
+
+
+3. Run the shell script the above command created (will run TQS.py on ALL tiles, sequentially (why not farming the job on a compte cluster?!)
+
+ chmod 755 runTQS.sh
+ ./runTQS.sh
+
+
+4. Concatenate all trimmed reads
+
+  cat s*.trim.fa > all_raw.fa
+
+ 
+5. Make the paired output (that will become the input for ssake3.2.1 -f)
+using the 2nd script supplied in this directory.
+
+./makePairedOutput.pl all_raw.fa
+
+
+As always, feel free to contact me if you have any questions.
+Rene
