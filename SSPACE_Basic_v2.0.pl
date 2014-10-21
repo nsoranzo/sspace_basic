@@ -104,50 +104,52 @@
 #-------------------------------------------------READ OPTIONS
 
   if(!($opt_l) || !($opt_s)){
-     print "ERROR: Parameter -l is required. Please insert a library file\n" if(!$opt_l);
-     print "ERROR: Parameter -s is required. Please insert a contig FASTA file\n" if(!$opt_s);
-     print "\nUsage: $0 $version\n\n";
-     print "============ General Parameters ============\n";
-     print "-l  Library file containing two mate pate files with insert size, error and either mate pair or paired end indication.\n";
-     print "-s  FASTA file containing contig sequences used for extension. Inserted pairs are mapped to extended and non-extended contigs (REQUIRED)\n";
-     print "-x  Indicate whether to extend the contigs of -s using paired reads in -l. (-x 1=extension, -x 0=no extension, default -x 0)\n";
-     print "============ Extension Parameters ============\n";
-     print "-m  Minimum number of overlapping bases with the seed/contig during overhang consensus build up (default -m $min_overlap)\n";
-     print "-o  Minimum number of reads needed to call a base during an extension (default -o $base_overlap)\n";
-     print "-t  Trim up to -t base(s) on the contig end when all possibilities have been exhausted for an extension (default -t $max_trim, optional)\n";
-     print "-u  FASTA/FASTQ file containing unpaired sequence reads (optional)\n";
-     print "============ Scaffolding Parameters ============\n";
-     print "-z  Minimum contig length used for scaffolding. Filters out contigs that are below -z (default -z 0 (no filtering), optional).\n";
-     print "-k  Minimum number of links (read pairs) to compute scaffold (default -k $min_links, optional)\n";
-     print "-a  Maximum link ratio between two best contig pairs *higher values lead to least accurate scaffolding* (default -a $max_link_ratio, optional)\n";
-     print "-n  Minimum overlap required between contigs to merge adjacent contigs in a scaffold (default -n $min_tig_overlap, optional)\n";
-     print "============ Bowtie Parameters ============\n";
-     print "-T  Specify the number of threads in Bowtie. Corresponds to the -p/--threads option in Bowtie (default -T $threads, optional)\n";
-     print "-g  Maximum number of allowed gaps during mapping with Bowtie. Corresponds to the -v option in Bowtie. *higher number of allowed gaps can lead to least accurate scaffolding* (default -v 0, optional)\n";
-     print "============ Additional Parameters ============\n";
-     print "-b  Base name for your output files (optional)\n";
-     print "-v  Runs in verbose mode (-v 1=yes, -v 0=no, default -v 0, optional)\n";
-     die "-p  Make .dot file for visualisation (-p 1=yes, -p 0=no, default -p 0, optional)\n";
-
+    print STDERR "ERROR: Parameter -l is required. Please insert a library file\n" if(!$opt_l);
+    print STDERR "ERROR: Parameter -s is required. Please insert a contig FASTA file\n" if(!$opt_s);
+    my $error_msg = <<"END_MSG";
+\nUsage: $0 $version\n\n
+============ General Parameters ============\n
+-l  Library file containing two paired read files with insert size, error and either mate pair or paired end indication (REQUIRED)\n
+-s  FASTA file containing contig sequences used for extension. Inserted pairs are mapped to extended and non-extended contigs (REQUIRED)\n
+-x  Indicate whether to extend the contigs of -s using paired reads in -l (-x 1=extension, -x 0=no extension, default -x $extending)\n
+============ Extension Parameters ============\n
+-m  Minimum number of overlapping bases with the seed/contig during overhang consensus build up (default -m $min_overlap)\n
+-o  Minimum number of reads needed to call a base during an extension (default -o $base_overlap)\n
+-t  Trim up to -t base(s) on the contig end when all possibilities have been exhausted for an extension (default -t $max_trim)\n
+-u  FASTA/FASTQ file containing unpaired sequence reads (optional)\n
+-r  Minimum base ratio used to accept a overhang consensus base (default -r $min_base_ratio)\n
+============ Scaffolding Parameters ============\n
+-z  Minimum contig length used for scaffolding. Filters out contigs below this value (default -z $minContigLength)\n
+-k  Minimum number of links (read pairs) to compute scaffold (default -k $min_links)\n
+-a  Maximum link ratio between two best contig pairs. *Higher values lead to least accurate scaffolding* (default -a $max_link_ratio)\n
+-n  Minimum overlap required between contigs to merge adjacent contigs in a scaffold (default -n $min_tig_overlap)\n
+============ Bowtie Parameters ============\n
+-g  Maximum number of allowed gaps during mapping with Bowtie. Corresponds to the -v option in Bowtie. *Higher number of allowed gaps can lead to least accurate scaffolding* (default -g $gaps)\n
+-T  Specify the number of threads in Bowtie. Corresponds to the -p/--threads option in Bowtie (default -T $threads)\n
+============ Additional Parameters ============\n
+-b  Base name for your output files (default -b $base_name)\n
+-v  Runs in verbose mode (-v 1=yes, -v 0=no, default -v $verbose)\n
+-p  Make .dot file for visualisation (-p 1=yes, -p 0=no, default -p $doplot)
+END_MSG
+    die $error_msg;
   }
 
+  my $libraryfile = $opt_l if ($opt_l);
   my $filecontig = $opt_s if($opt_s);
+  $extending = $opt_x if($opt_x eq 1);
   $min_overlap = $opt_m if ($opt_m);
   $base_overlap = $opt_o if ($opt_o);
-  $threads = $opt_T if ($opt_T);
-  $verbose = $opt_v if ($opt_v);
+  $unpaired_file = $opt_u if($opt_u);
+  $min_base_ratio = $opt_r if ($opt_r);
+  $minContigLength = $opt_z if($opt_z);
   $min_links = $opt_k if ($opt_k);
   $max_link_ratio = $opt_a if ($opt_a);
-  $min_base_ratio = $opt_r if ($opt_r);
-  $base_name = $opt_b if($opt_b);
   $min_tig_overlap = $opt_n if($opt_n);
-  $unpaired_file = $opt_u if($opt_u);
-  $doplot = $opt_p if($opt_p);
-  $extending = $opt_x if($opt_x eq 1);
-  $minContigLength = $opt_z if($opt_z);
   $gaps = $opt_g if($opt_g);
-  my $libraryfile;
-  $libraryfile = $opt_l if ($opt_l);
+  $threads = $opt_T if ($opt_T);
+  $base_name = $opt_b if($opt_b);
+  $verbose = $opt_v if ($opt_v);
+  $doplot = $opt_p if($opt_p);
 
 #-------------------------------------------------CHECKING PARAMETERS
   die "ERROR: Invalid (-l) library file $libraryfile ...Exiting.\n" if(! -e $libraryfile);
@@ -155,14 +157,14 @@
   die "ERROR: -x must be either 0 or 1. Your inserted -x is $extending...Exiting.\n" if(!($extending == 0 || $extending == 1));
   die "ERROR: -m must be a number between 15-50. Your inserted -m is $min_overlap ...Exiting.\n" if(!($min_overlap =~ /^\d+$/) || $min_overlap < 10 || $min_overlap > 50);
   die "ERROR: -o must be set to 1 or higher. Your inserted -o is $base_overlap ...Exiting.\n" if($base_overlap < 1);
-  die "ERROR: -k must be an integer number. Your inserted -k is $min_links ...Exiting.\n" if(!($min_links =~ /^\d+$/));
-  die "ERROR: -a must be a number between 0.00 and 1.00. Your inserted -a is $max_link_ratio ...Exiting.\n" if($max_link_ratio < 0 ||$max_link_ratio > 1);
-  die "ERROR: -n must be an integer number. Your inserted -n is $min_tig_overlap ...Exiting.\n" if (!($min_tig_overlap =~ /^\d+$/));
   die "ERROR: Invalid unpaired file $unpaired_file -- fatal\n" if(! -e $unpaired_file && $opt_u);
+  die "ERROR: -z must be a positive integer. Your inserted -z is $minContigLength...Exiting.\n" if (!($minContigLength =~ /^\d+$/));
+  die "ERROR: -k must be a positive integer. Your inserted -k is $min_links ...Exiting.\n" if(!($min_links =~ /^\d+$/));
+  die "ERROR: -a must be a number between 0.0 and 1.0. Your inserted -a is $max_link_ratio ...Exiting.\n" if($max_link_ratio < 0 || $max_link_ratio > 1);
+  die "ERROR: -n must be a positive integer. Your inserted -n is $min_tig_overlap ...Exiting.\n" if (!($min_tig_overlap =~ /^\d+$/));
+  die "ERROR: -g must be a positive integer between 0 and 3. Your inserted -g is $gaps...Exiting.\n" if (!($gaps =~ /^\d+$/) || $gaps > 3);
+  die "ERROR: -T must be a positive integer. Your inserted -T is $threads...Exiting.\n" if (!($threads =~ /^\d+$/));
   die "ERROR: -p must be either 0 or 1. Your inserted -p is $doplot...Exiting.\n" if(!($doplot == 0 || $doplot == 1));
-  die "ERROR: -z must be positive integer. Your inserted -z is $minContigLength...Exiting.\n" if (!($minContigLength =~ /^\d+$/));
-  die "ERROR: -g must be positive integer between 0 and 3. Your inserted -g is $gaps...Exiting.\n" if (!($gaps =~ /^\d+$/) || $gaps > 3);
-  die "ERROR: -T must be positive integer. Your inserted -T is $threads...Exiting.\n" if (!($threads =~ /^\d+$/));
 
 #-------------------------------------------------check library file;
   open(FILELIB, "< $libraryfile");

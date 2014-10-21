@@ -34,38 +34,38 @@ e.g. perl SSPACE_Premium_v1.0.pl -l libraries.txt -s contigs.fasta -x 0 -m 32 -o
 
 Usage: ./SSPACE_Premium_v1.0.pl
 
-Required parameters:
-   -l  Library file containing two paired read files with insert size, error and orientation (see Manual for more information). Also possible to insert .tab files with pairing information.
-   -s  FASTA file containing contig sequences used for extension. Inserted paired reads are mapped to extended and non-extended contigs
+General parameters:
+   -l  Library file containing two paired read files with insert size, error and orientation (see Manual for more information). Also possible to insert .tab files with pairing information (REQUIRED)
+   -s  FASTA file containing contig sequences used for extension. Inserted paired reads are mapped to extended and non-extended contigs (REQUIRED)
+   -x  Indicate whether to extend the contigs of -s using paired reads in -l (-x 1=extension, -x 0=no extension, default -x 0)
 
-Extension parameters;
+Extension parameters:
    -m  Minimum number of overlapping bases with the seed/contig during overhang consensus build up (default -m 32)
    -o  Minimum number of reads needed to call a base during an extension (default -o 20)
    -t  Trim up to -t base(s) on the contig end when all possibilities have been exhausted for an extension (default -t 0)
-   -u  Single FASTA/FASTQ file containing unpaired sequence reads
+   -u  Single FASTA/FASTQ file containing unpaired sequence reads (optional)
    -r  Minimum base ratio used to accept a overhang consensus base (default -r 0.9)
 
-Parameters below only considered for scaffolding and are all optional;
+Scaffolding parameters:
+   -z  Minimum contig length used for scaffolding. Filters out contigs below this value (default -z 0)
    -k  Minimum number of links (read pairs) to compute scaffold (default -k 5)
-   -a  Maximum link ratio between two best contig pairs. higher values lead to least accurate scaffolding. (default -a 0.70)
+   -a  Maximum link ratio between two best contig pairs. Higher values lead to least accurate scaffolding (default -a 0.7)
    -n  Minimum overlap required between contigs to merge adjacent contigs in a scaffold (default -n 15)
-   -z  Minimum contig size used for scaffold. Filters out contigs below this size. (default -z 0, no filtering)
 
-Bowtie parameters;
-   -g  Maximum number of allowed gaps during mapping with Bowtie. Corresponds to the -v option in Bowtie (default -g 0).
-   -T  Specifes the number of threads in Bowtie. Corresponds to the -p option in Bowtie (default -T 1).
+Bowtie parameters:
+   -g  Maximum number of allowed gaps during mapping with Bowtie. Corresponds to the -v option in Bowtie. Higher number of allowed gaps can lead to least accurate scaffolding (default -g 0)
+   -T  Specifes the number of threads in Bowtie. Corresponds to the -p/--threads option in Bowtie (default -T 1)
 
-Additional options;
-   -x  Indicate whether to extend the contigs of -s using paired reads in -l. (-x 1=extension, -x 0=no extension, default -x 0)
-   -v  Runs in verbose mode (-v 1=yes, -v 0=no, default -v 0)
+Additional options:
    -b  Base name for your output files (default -b standard_output)
+   -v  Runs in verbose mode (-v 1=yes, -v 0=no, default -v 0)
    -p  Make .dot file for visualisation (-p 1=yes, -p 0=no, default -p 0)
 
 
 How it works
 ------------
 
-The program consists of several steps, a short overview;
+The program consists of several steps, a short overview.
 
 The first steps are reading the data and filter them. The protocol is slightly different when -x is set to either 0 or 1. We treat them separately here;
 
