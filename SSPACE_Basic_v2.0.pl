@@ -139,6 +139,7 @@ END_MSG
   $extending = $opt_x if($opt_x eq 1);
   $min_overlap = $opt_m if ($opt_m);
   $base_overlap = $opt_o if ($opt_o);
+  $max_trim = $opt_t if ($opt_t);
   $unpaired_file = $opt_u if($opt_u);
   $min_base_ratio = $opt_r if ($opt_r);
   $minContigLength = $opt_z if($opt_z);
@@ -157,7 +158,9 @@ END_MSG
   die "ERROR: -x must be either 0 or 1. Your inserted -x is $extending...Exiting.\n" if(!($extending == 0 || $extending == 1));
   die "ERROR: -m must be a number between 15-50. Your inserted -m is $min_overlap ...Exiting.\n" if(!($min_overlap =~ /^\d+$/) || $min_overlap < 10 || $min_overlap > 50);
   die "ERROR: -o must be set to 1 or higher. Your inserted -o is $base_overlap ...Exiting.\n" if($base_overlap < 1);
+  die "ERROR: -t must be a positive integer. Your inserted -t is $max_trim ...Exiting.\n" if(!($max_trim =~ /^\d+$/));
   die "ERROR: Invalid unpaired file $unpaired_file -- fatal\n" if(! -e $unpaired_file && $opt_u);
+  die "ERROR: -r must be a number between 0.0 and 1.0. Your inserted -r is $min_base_ratio ...Exiting.\n" if($min_base_ratio < 0 || $min_base_ratio > 1);
   die "ERROR: -z must be a positive integer. Your inserted -z is $minContigLength...Exiting.\n" if (!($minContigLength =~ /^\d+$/));
   die "ERROR: -k must be a positive integer. Your inserted -k is $min_links ...Exiting.\n" if(!($min_links =~ /^\d+$/));
   die "ERROR: -a must be a number between 0.0 and 1.0. Your inserted -a is $max_link_ratio ...Exiting.\n" if($max_link_ratio < 0 || $max_link_ratio > 1);
