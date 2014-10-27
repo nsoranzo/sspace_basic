@@ -16,7 +16,6 @@
 #  each found orientation (FR, RF, FF and RR) are given.                                                          #
 ###################################################################################################################
 
-use FindBin qw($Bin);
 use File::Path;
 use strict;
 my $contigfile = $ARGV[0];
@@ -102,11 +101,7 @@ print "\nmedian = $median_ins\n\nSee the distribution in file 'distribution.txt'
 sub mapWithBowtie{
   my ($fname,$contig, $fileA, $fileB) = @_;
   my $bowtieout = "contig$fname.bowtieIndex";
-  my $Bin2 = substr($Bin, 0, -5);
-  my $bowtiepath = "$Bin2"."/bowtie/bowtie";
-  $bowtiepath =~ s/ /\\ /g;
-  my $bowbuildpath = $bowtiepath."-build";
-  system("$bowbuildpath $contig bowtieoutput/$bowtieout --quiet --noref") == 0 || die "\nBowtie-build error; $?"; # returns exit status values
+  system("bowtie-build $contig bowtieoutput/$bowtieout --quiet --noref") == 0 || die "\nBowtie-build error; $?"; # returns exit status values
 
   my $fastq = 0;
   open(TEST, "< $fileA");
@@ -132,7 +127,7 @@ sub mapWithBowtie{
     print BOWIN ">read$count\n$seq1>read$count\n$seq2";
     if($count > $numpairs){
       close BOWIN;
-      open(IN, "$bowtiepath -p 1 -v 0 -m 1 bowtieoutput/$bowtieout --suppress 6,7 -f bowtieoutput/bowtiein.$fname.fa --quiet|") || die "Can't open bowtie output -- fatal\n";
+      open(IN, "bowtie -p 1 -v 0 -m 1 bowtieoutput/$bowtieout --suppress 6,7 -f bowtieoutput/bowtiein.$fname.fa --quiet|") || die "Can't open bowtie output -- fatal\n";
       my ($prevread, $prevline);
       while(my $line = <IN>){
         my @t1 = split(/\t/,$line);

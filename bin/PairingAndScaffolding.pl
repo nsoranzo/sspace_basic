@@ -17,9 +17,7 @@
   use Storable;
   use File::Path;
   use File::Basename;
-  my ($Bin, $gaps);
   my $seplines = ("-" x 60)."\n";
-  my $Bin = $ARGV[0];
   my $gaps = $ARGV[1];
   my $contig = $ARGV[2];
   my $base_name = $ARGV[3];
@@ -814,19 +812,15 @@ sub mapReadsWithBowtie{
    my ($contigFile, $singlereads, $gaps, $threads) = @_;
    #building Index of contig and mapping reads to Index
    my $bowtieout = $base_name . ".$library.bowtieIndex";
-   my $bowbuildpath = "$Bin"."/bowtie/bowtie-build";
-   my $bowtiepath = "$Bin"."/bowtie/bowtie";
-   $bowtiepath =~ s/ /\\ /g;
-   $bowbuildpath  =~ s/ /\\ /g;
 
    my @reads = split(/,/,$singlereads);
    foreach my $read (@reads){
      die "Single read file ($read) not found. Exiting...\n" if(!(-e $read));
    }
-   my $procline = "$bowtiepath -p $threads -v $gaps -m 1 bowtieoutput/$bowtieout --suppress 6,7 -f $singlereads --quiet --refidx |";
+   my $procline = "bowtie -p $threads -v $gaps -m 1 bowtieoutput/$bowtieout --suppress 6,7 -f $singlereads --quiet --refidx |";
    die "Contig file ($contigFile) not found. Exiting...\n" if(!(-e $contigFile));
    &printMessage("\n=>".getDate().": Building Bowtie index for contigs\n");
-   system("$bowbuildpath $contigFile bowtieoutput/$bowtieout --quiet --noref") == 0 || die "\nBowtie-build error; $?"; # returns exit status values
+   system("bowtie-build $contigFile bowtieoutput/$bowtieout --quiet --noref") == 0 || die "\nBowtie-build error; $?"; # returns exit status values
    
    #Treat the output of Bowtie differently if multithreading is used or not
    readBowtieOneThread($procline) if($threads <= 1);

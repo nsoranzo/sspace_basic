@@ -24,7 +24,6 @@
   my $min_base_ratio = $ARGV[7];
   my $max_trim = $ARGV[8];
   my $verbose = $ARGV[9];
-  my $Bin = $ARGV[10];
   my $minContigLength = $ARGV[11];   
   my $libraryfile = $ARGV[12];
   my $gaps = $ARGV[13];
@@ -336,15 +335,11 @@ sub getUnmappedReads{
   
   #build bowtie index of contigs and map reads to the index
   my $bowtieout = $base_name . ".$library.bowtieIndex";
-  my $bowbuildpath = "$Bin"."/bowtie/bowtie-build";
-  my $bowtiepath = "$Bin"."/bowtie/bowtie";
-  $bowtiepath =~ s/ /\\ /g;
-  $bowbuildpath  =~ s/ /\\ /g;
   die "Contig file ($contigFile) not found. Exiting...\n" if(!(-e $contigFile));
   &printMessage("\n=>".getDate().": Building Bowtie index for contigs\n");
-  system("$bowbuildpath $contigFile bowtieoutput/$bowtieout --quiet --noref") == 0 || die "\nBowtie-build error; $?"; # returns exit status values
+  system("bowtie-build $contigFile bowtieoutput/$bowtieout --quiet --noref") == 0 || die "\nBowtie-build error; $?"; # returns exit status values
   &printMessage("\n=>".getDate().": Mapping reads to Bowtie index\n");
-  my $procline = "$bowtiepath -p $threads -v $gaps bowtieoutput/$bowtieout -f $fnames --quiet -S |";
+  my $procline = "bowtie -p $threads -v $gaps bowtieoutput/$bowtieout -f $fnames --quiet -S |";
 
   #map reads with bowtie and obtain unmapped reads. Store the unmapped reads into a hash and use them for contig extension
   open(IN, "$procline") || die "Can't open bowtie output -- fatal\n";
