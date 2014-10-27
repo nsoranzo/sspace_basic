@@ -1,7 +1,9 @@
 Scaffolding Pre-Assemblies After Contig Extension (SSPACE)
 
-SSPACE Premium v1.0 Marten Boetzer - Walter Pirovano, Aug 2011
-email: walter.pirovano@baseclear.nl
+SSPACE BASIC
+© 2011 Marten Boetzer, Walter Pirovano
+© 2014 Nicola Soranzo
+email: soranzo@crs4.it
 
 
 Description
@@ -32,9 +34,9 @@ Boetzer M, Henkel CV, Jansen HJ, Butler D and Pirovano W. 2010. Scaffolding pre-
 Running SSPACE
 -------------
 
-e.g. perl SSPACE_Premium_v1.0.pl -l libraries.txt -s contigs.fasta -x 0 -m 32 -o 20 -t 0 -k 5 -a 0.70 -n 15 -p 0 -v 0 -z 0 -g 0 -T 1 -b standard_out
+e.g. perl SSPACE_Basic.pl -l libraries.txt -s contigs.fasta -x 0 -m 32 -o 20 -t 0 -k 5 -a 0.70 -n 15 -p 0 -v 0 -z 0 -g 0 -T 1 -b standard_out
 
-Usage: ./SSPACE_Premium_v1.0.pl
+Usage: ./SSPACE_Basic.pl
 
 General parameters:
    -l  Library file containing two paired read files with insert size, error and orientation (see Manual for more information). Also possible to insert .tab files with pairing information (REQUIRED)
