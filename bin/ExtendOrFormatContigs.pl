@@ -24,11 +24,10 @@
   my $min_base_ratio = $ARGV[7];
   my $max_trim = $ARGV[8];
   my $verbose = $ARGV[9];
-  my $minContigLength = $ARGV[11];   
+  my $minContigLength = $ARGV[11];
   my $libraryfile = $ARGV[12];
   my $gaps = $ARGV[13];
   my $threads = $ARGV[14];
-  
 
   my $log = $base_name . ".logfile.txt";
   my $summaryfile = $base_name.".summaryfile.txt";
@@ -39,7 +38,7 @@
   my ($bin);
   if($extending == 1){
 
-    &ExtendContigs($base_name, $filecontig, $filenameOutExt, $Bin);
+    &ExtendContigs($base_name, $filecontig, $filenameOutExt);
     print SUMFILE "\n" if($minContigLength > 0);
     &FormatContigs() if($minContigLength > 0);
   }else{
@@ -48,13 +47,13 @@
 
   close SUMFILE;
   close LOG;
-  
+
   mkpath('process_OK');
 #--------------------------------------------------
 
 ###EXTEND CONTIGS WITH UNMAPPED READS
 sub ExtendContigs{
-  my ($base_name, $filecontig, $filenameOutExt, $Bin) = @_;
+  my ($base_name, $filecontig, $filenameOutExt) = @_;
   my ($seq);
   #-------------------------------------------------NOW MAP SINGLE READS TO INITIAL CONTIGS FILE.
   my $readfile = "reads/" . $filenameOutExt;
@@ -67,8 +66,8 @@ sub ExtendContigs{
   #--------------------------------------------ASSEMBLY START
 
  ASSEMBLY:
-   open(IN,$filecontig) || die "Can't open $filecontig -- fatal\n";
-   my ($exttig_count, $counter, $NCount, $orig_mer, $prevhead) = (0,0,0,0,'');
+   open(IN, $filecontig) || die "Can't open $filecontig -- fatal\n";
+   my ($exttig_count, $counter, $NCount, $orig_mer, $prevhead) = (0, 0, 0, 0, '');
    while(<IN>){
       s/\r\n/\n/;
       chomp;
@@ -91,12 +90,12 @@ sub ExtendContigs{
              my $reversetig = reverseComplement($seqrc);                   ### return to sequence, as inputted
              if($leng > $orig_mer){ ### commented out: && $start_sequence ne $seqrc && $start_sequence ne $reversetig
                my $cov =  $total_bases / $leng;
-               printf TIG ">extcontig%i|size%i|read%i|cov%.2f|seed:$prevhead\n%s\n", ($counter,$leng,$reads_needed,$cov,$reversetig);    #print contigs to file
+               printf TIG ">extcontig%i|size%i|read%i|cov%.2f|seed:$prevhead\n%s\n", ($counter, $leng, $reads_needed, $cov, $reversetig);    #print contigs to file
                $exttig_count++;
              }else{
                my $cov = $reads_needed = 0;
                my $singlet_leng = length($start_sequence);
-               printf TIG ">contig%i|size%i|read%i|cov%.2f|seed:$prevhead\n%s\n", ($counter,$leng,$reads_needed,$cov,$reversetig);    #print singlets to file
+               printf TIG ">contig%i|size%i|read%i|cov%.2f|seed:$prevhead\n%s\n", ($counter, $leng, $reads_needed, $cov, $reversetig);    #print singlets to file
              }
          }
          CounterPrint(++$counter);
@@ -124,8 +123,8 @@ sub ExtendContigs{
 sub FormatContigs{
    &printMessage("\n=>".getDate().": Storing contigs to format for scaffolding\n");
    open (TIG, ">$contig") || die "Can't write to $contig -- fatal\n";
-   open(IN,$filecontig) || die "Can't open $filecontig -- fatal\n";
-   my ($counter, $seq, $prevhead, $step) = (0,'','', 100);
+   open(IN, $filecontig) || die "Can't open $filecontig -- fatal\n";
+   my ($counter, $seq, $prevhead, $step) = (0, '', '', 100);
    while(<IN>){
       s/\r\n/\n/;
       chomp;
@@ -138,7 +137,7 @@ sub FormatContigs{
             CounterPrint($counter);
             $step = $step + 100;
           }
-          printf TIG ">contig%i|size%i|read%i|cov%.2f|seed:$prevhead\n%s\n", ($counter,$length_seq,0,0.00,$seq);
+          printf TIG ">contig%i|size%i|read%i|cov%.2f|seed:$prevhead\n%s\n", ($counter, $length_seq, 0, 0.00, $seq);
         }
         $prevhead = $head;
         $seq = '';
@@ -157,7 +156,7 @@ sub doExtension{
    my ($direction, $orig_mer, $seq, $reads_needed, $total_bases, $min_overlap, $base_overlap, $min_base_ratio, $verbose, $tig_count, $max_trim) = @_;
 
    my $previous = $seq;
-   my ($extended, $trim_ct) = (1,0);
+   my ($extended, $trim_ct) = (1, 0);
 
    if($orig_mer > $MAX){$orig_mer=$MAX;}  ### Deals with special cases where the seed sequences are different from the read set (and possibly very large) - goal here is not to increase sequence coverage of seed, but rather to extend it.
 
@@ -165,7 +164,7 @@ sub doExtension{
    while($trim_ct <= $max_trim){
       while($extended){
 
-         my ($pos,$current_reads,$current_bases,$span) = (0,0,0,"");
+         my ($pos, $current_reads, $current_bases, $span) = (0, 0, 0, "");
 
          ### Added 19March08
          if(length($seq) >= $MAX){   # $seq is length of contig being extended -- if larger than largest read, make sure the largest read could align and all subsequent rds.
@@ -177,10 +176,10 @@ sub doExtension{
          my $overhang = {};
          my @overlapping_reads = ();
          for (my $x=1;$x <= ($orig_mer * 2);$x++){
-            ($overhang->{$x}{'A'},$overhang->{$x}{'C'},$overhang->{$x}{'G'},$overhang->{$x}{'T'}) = (0,0,0,0);
+            ($overhang->{$x}{'A'}, $overhang->{$x}{'C'}, $overhang->{$x}{'G'}, $overhang->{$x}{'T'}) = (0, 0, 0, 0);
          }
 
-         ### COLLECT SEQUENCES 
+         ### COLLECT SEQUENCES
          while ($span >= $min_overlap){  # will slide the subseq, until the user-defined min overlap size
 
             $pos = length($seq) - $span;
@@ -200,9 +199,9 @@ sub doExtension{
 
                   # Collect all overhangs
                   push @overlapping_reads, $pass;                  ### all overlapping reads
-                  my @over = split(//,$dangle);
+                  my @over = split(//, $dangle);
                   my $ct_oh = 0;
- 
+
                   foreach my $bz(@over){
                     $ct_oh++;                                     ### tracks overhang position passed the seed
                     $overhang->{$ct_oh}{$bz} += $bin->{$sub}{$pass};
@@ -242,7 +241,7 @@ sub doExtension{
                         last CONSENSUS;
                      }
                   }
-                  $previous_bz = $bz;                 
+                  $previous_bz = $bz;
                   $ct_dna++;
                }
             }
@@ -252,7 +251,7 @@ sub doExtension{
          if($consensus ne ""){
 
             print "Will extend $seq\nwith: $consensus\n\n" if($verbose);
-            my $temp_sequence = $seq . $consensus;  ## this is the contig extension  
+            my $temp_sequence = $seq . $consensus;  ## this is the contig extension
             my $integral = 0;
             my $position = length($temp_sequence) - ($startspan + length($consensus));
             my $temp_sequence_end = substr($temp_sequence, $position);
@@ -290,7 +289,7 @@ sub doExtension{
          $extended = 1;
          print "\n$direction prime EXTENSION ROUND $trim_ct COMPLETE UNTIL $max_trim nt TRIMMED OFF => TRIMMED SEQUENCE:$seq\n\n" if ($verbose);
       }
-      
+
    }### while trimming within bounds
 
    print "\n*** NOTHING ELSE TO BE DONE IN $direction prime- PERHAPS YOU COULD DECREASE THE MINIMUM OVERLAP -m (currently set to -m $min_overlap) ***\n\n" if ($verbose);
@@ -302,11 +301,11 @@ sub doExtension{
 ###DELETE READ DATA IF IT HAS BEEN USED FOR EXTENDING A CONTIG
 sub deleteData {
    my ($sequence) = @_;
-   
+
    my $subnor = substr($sequence, 0, 10);
    my $comp_seq = reverseComplement($sequence);
    my $subrv = substr($comp_seq, 0, 10);
-  
+
    #remove k-mer from hash table and prefix tree
    delete $bin->{$subrv}{$comp_seq};
    delete $bin->{$subnor}{$sequence};
@@ -314,7 +313,7 @@ sub deleteData {
 
 sub getUnmappedReads{
   my ($contigFile, $readfiles) = @_;
-  my ($library,$fnames) = ("start","");
+  my ($library, $fnames) = ("start", "");
 
   #obtain sequences to map against the contigs
   open(FILELIB, "< $libraryfile") || die "Can't open $libraryfile -- fatal\n";
@@ -330,9 +329,11 @@ sub getUnmappedReads{
   close FILELIB;
   my $unpaired = "reads/$base_name.singlereads.fasta";
   $files->{$unpaired}++ if(-e $unpaired);
-  foreach my $f(keys %$files){ $fnames.="$f,";}
+  foreach my $f(keys %$files){
+    $fnames .= "$f,";
+  }
   chop $fnames;
-  
+
   #build bowtie index of contigs and map reads to the index
   my $bowtieout = $base_name . ".$library.bowtieIndex";
   die "Contig file ($contigFile) not found. Exiting...\n" if(!(-e $contigFile));
@@ -344,7 +345,7 @@ sub getUnmappedReads{
   #map reads with bowtie and obtain unmapped reads. Store the unmapped reads into a hash and use them for contig extension
   open(IN, "$procline") || die "Can't open bowtie output -- fatal\n";
   my ($counter, $step) = (0, 100000);
-  my ($orig, $rc, $subrv,$subnor, $orig_mer);
+  my ($orig, $rc, $subrv, $subnor, $orig_mer);
   while(<IN>){
     my @t = split(/\t/);
     next if ($t[2] ne '*');
