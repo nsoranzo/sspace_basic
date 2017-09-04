@@ -17,7 +17,6 @@
   use Cwd qw(abs_path);
 
   my ($MAX, $MAX_TOP, $TRACK_COUNT) = (0, 100, 1);
-
   my $seplines = ("-" x 60)."\n";
 
   my $contig = $ARGV[0];
