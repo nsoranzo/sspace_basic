@@ -1,0 +1,17 @@
+language: "perl"
+perl:
+  - 5.24-shrplib
+
+before_install:
+  - sudo apt-get update -q
+  - sudo apt-get install -y bowtie
+
+install: []
+
+script:
+  - wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR001/SRR001665/SRR001665_1.fastq.gz
+  - wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR001/SRR001665/SRR001665_2.fastq.gz
+  - gunzip SRR001665_?.fastq.gz
+  - ./SSPACE_Basic.pl -l example/libraries.txt -s example/contigs_abyss.fasta -k 5 -a 0.7 -x 0 -b ecoli_scaffolds_no_extension
+  # Check that the output is correct
+  - diff example/ecoli_scaffolds_no_extension.summaryfile.txt .

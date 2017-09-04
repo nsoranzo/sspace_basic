@@ -1,0 +1,62 @@
+READING READS lib1:
+------------------------------------------------------------
+	Total inserted pairs = 10408224 
+	Number of pairs containing N's = 61604 
+	Remaining pairs = 10346620
+------------------------------------------------------------
+
+
+
+LIBRARY lib1 STATS:
+################################################################################
+
+MAPPING READS TO CONTIGS:
+------------------------------------------------------------
+	Number of single reads found on contigs = 1949086
+	Number of pairs used for pairing contigs / total pairs = 666142 / 683736
+------------------------------------------------------------
+
+READ PAIRS STATS:
+	Assembled pairs: 666142 (1332284 sequences)
+		Satisfied in distance/logic within contigs (i.e. -> <-, distance on target: 200 +/-150): 519701
+		Unsatisfied in distance within contigs (i.e. distance out-of-bounds): 233
+		Unsatisfied pairing logic within contigs (i.e. illogical pairing ->->, <-<- or <-->): 5
+		---
+		Satisfied in distance/logic within a given contig pair (pre-scaffold): 146175
+		Unsatisfied in distance within a given contig pair (i.e. calculated distances out-of-bounds): 28
+		---
+	Total satisfied: 665876	unsatisfied: 266
+
+
+	Estimated insert size statistics (based on 519934 pairs): 
+		Mean insert size = 215
+		Median insert size = 215
+REPEATS: 
+	Number of repeated edges = 24
+------------------------------------------------------------
+
+################################################################################
+
+SUMMARY: 
+------------------------------------------------------------
+	Inserted contig file;
+		Total number of contigs = 595
+		Sum (bp) = 4545610
+			Total number of N's = 0
+			Sum (bp) no N's = 4545610
+		Max contig size = 67081
+		Min contig size = 100
+		Average contig size = 7639
+		N50 = 18242
+
+	After scaffolding lib1:
+		Total number of scaffolds = 127
+		Sum (bp) = 4545129
+			Total number of N's = 5518
+			Sum (bp) no N's = 4539611
+		Max scaffold size = 268578
+		Min scaffold size = 100
+		Average scaffold size = 35788
+		N50 = 94525
+
+------------------------------------------------------------
