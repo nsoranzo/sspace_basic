@@ -664,6 +664,6 @@ sub FlushFiles{
 
 
 sub checkStatus{
-  &printMessage(("*" x 50)."\n\nProcess failed on ".getDate()."\n\n\n"), exit if(!(-d "process_OK"));
+  &printMessage(("*" x 50)."\n\nProcess failed on ".getDate()."\n\n\n"), exit 1 if(!(-d "process_OK"));
   rmtree(["process_OK", 'blurfl/quux']);
 }
