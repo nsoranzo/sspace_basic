@@ -5,6 +5,14 @@ SSPACE BASIC
 © 2014,2016 Nicola Soranzo
 email: nicola.soranzo@earlham.ac.uk
 
+NOTICE
+======
+
+This is mainly a repository to store the last open source release (GNU GPL 2.0
+license) of the Basic version of SSPACE before it was discontinued and removed
+from the original website.
+I have added a few patches of mine and I am open to external contributions, but
+I do not offer support or plan any further development.
 
 Description
 -----------
@@ -401,7 +409,6 @@ Negative m values imply that there's a possible overlap between the contigs. But
 
 
 Understanding the .scaffolds.fasta file
-
 -------------------------------------
 
 scaffold13.1|size84140|tigs14
@@ -413,7 +420,7 @@ number contigs in scaffold
 
 Each initial contig inputted at -s option stored in a scaffold is written to the .evidence file. This file is explained below.
 
-Understanding the .scaffolds.evidence  file
+Understanding the .scaffolds.evidence file
 -------------------------------------
 
 >scaffold1.1|size9058|tigs5
@@ -428,6 +435,7 @@ The first line indicates the scaffold, which is the same as in the .scaffolds.fa
 
 Producing visualisation of scaffolds with .dot file using -p parameter
 -------------------------------------
+
 To visualize the scaffolds of the .dot file, GraphViz should be downloaded at (www.graphviz.org). GraphViz converts the .dot file to any desired output using the 'dot' function. For example to convert the .dot to a .ps format;
 
 dot -Tps2 (basename).(libname).visual_scaffolds.dot -o MYOUTPUT.ps
@@ -437,7 +445,8 @@ This will produce a postscript (.ps) file. For other options, see the manual of 
 
 
 How does the .tab file work
--------------------------------------
+---------------------------
+
 The .tab file is a tab-delimited file containing information about the positions of the reads on the contigs. On each line, positions of both reads are given.
 
 A typical .tab file line looks like;
