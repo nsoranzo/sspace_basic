@@ -185,7 +185,7 @@ END_MSG
         if($fileA ne "TAB"){
           die "ERROR: Invalid file in library $library: $fileA -- fatal\n" if(! -e $fileA);
         }else{
-          die "ERROR: Can't apply filtering using the -z option (-z = $minContigLength)and insertion of a TAB file -- fatal\n" if($minContigLength > 0);
+          die "ERROR: Can't apply filtering using the -z option (-z = $minContigLength) and insertion of a TAB file -- fatal\n" if($minContigLength > 0);
         }
         die "ERROR: Invalid file in library $library: $fileB -- fatal\n" if(! -e $fileB);
         die "ERROR: Insert size should be higher than or equal to 0. Your library $library has insert size of $insert_size. Exiting.\n" if(!($insert_size>0) || !($insert_size =~ /^\d+$/));
