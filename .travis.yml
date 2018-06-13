@@ -14,4 +14,4 @@ script:
   - gunzip SRR001665_?.fastq.gz
   - ./SSPACE_Basic.pl -l example/libraries.txt -s example/contigs_abyss.fasta -k 5 -a 0.7 -x 0 -b ecoli_scaffolds_no_extension
   # Check that the output is correct
-  - diff example/ecoli_scaffolds_no_extension.summaryfile.txt .
+  - diff -u example/ecoli_scaffolds_no_extension.summaryfile.txt .
