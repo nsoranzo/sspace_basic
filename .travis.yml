@@ -1,10 +1,12 @@
+sudo: false
 language: "perl"
 perl:
   - 5.24-shrplib
 
-before_install:
-  - sudo apt-get update -q
-  - sudo apt-get install -y bowtie
+addons:
+  apt:
+    packages:
+      - bowtie
 
 install: []
 
