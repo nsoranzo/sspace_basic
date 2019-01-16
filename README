@@ -9,8 +9,10 @@ NOTICE
 ======
 
 This is mainly a repository to store the last open source release (GNU GPL 2.0
-license) of the Basic version of SSPACE before it was discontinued and removed
-from the original website.
+license) of the "basic" version of SSPACE before it was discontinued. SSPACE
+"standard", a newer, but non-open source, versions of SSPACE is available at
+https://www.baseclear.com/services/bioinformatics/basetools/sspace-standard/
+
 I have added a few patches of mine and I am open to external contributions, but
 I do not offer support or plan any further development.
 
